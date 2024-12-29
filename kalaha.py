@@ -26,28 +26,29 @@ def print_board(board:list[int]) -> None:
 
 def make_move(board:list[int], move:int) -> tuple[list[int], bool] | None:
     board_ret = board.copy()
-    #if not (0 <= move <= 5): return None
     if board[move] <= 0: return None
     amount = board[move]
     board_ret[move] = 0
     i = 0
+    index = 0
     enemies_safe = 6 if move < 6 else 13
     while amount > 0:
         i += 1
         if ((move + i) % 14) == enemies_safe: i += 1
-        board_ret[(move + i) % 14] += 1
+        index = (move + i) % 14
+        board_ret[index] += 1
         amount -= 1
-    move_again = ((move + i) % 14) == (enemies_safe - 7) % 14
-    final_hole = (move + i) % 14
+    move_again = (index) == (enemies_safe - 7) % 14
+    final_hole = (index) % 14
     if enemies_safe == 6:
         if final_hole < 6 and board_ret[final_hole] == 1:
-            hole_mirrored = 13 - final_hole
+            hole_mirrored = 12 - final_hole
             board_ret[13] += 1 + board_ret[hole_mirrored]
             board_ret[final_hole] = 0
             board_ret[hole_mirrored] = 0
     else:
         if final_hole > 6 and board_ret[final_hole] == 1:
-            hole_mirrored = 13 - final_hole
+            hole_mirrored = 12 - final_hole
             board_ret[6] += 1 + board_ret[hole_mirrored]
             board_ret[final_hole] = 0
             board_ret[hole_mirrored] = 0
@@ -70,7 +71,7 @@ def eval_board(board:list[int]) -> float:
     score -= board_local[6]
     score += board_local[13]
     
-    if board_local[6] > 18: score -= inf
+    if board_local[6 ] > 18: score -= inf
     if board_local[13] > 18: score += inf
     return score
 
@@ -112,8 +113,12 @@ def eval_moves(board:list[int], depth_max:int, player:bool) -> dict[int, float]:
         player = True
     moves_available = get_available_moves(board=board.copy(), player=player)
     output: dict[int, float] = {}
-    for move_available in moves_available:
-        output[(7 * int(not player)) + move_available] = recursive_step(board=board.copy(), player=player, depth=1, depth_max=depth_max)
+    for move_chosen in moves_available:
+        _make_move_output = make_move(board=board.copy(), move=move_chosen)
+        if _make_move_output == None: raise ValueError("fuck off, this is not a thing")
+        board_instance, move_again = _make_move_output
+        player_instance = player if move_again else not player
+        output[(7 * int(not player)) + move_chosen] = recursive_step(board=board_instance.copy(), player=player_instance, depth=1, depth_max=depth_max)
     return output
 
 def get_player_move(available_moves:list[int]) -> int:
