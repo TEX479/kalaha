@@ -1,8 +1,15 @@
 '''
+for every part of this program:
+"player" is a bool. if it is false, it is the player's turn, else the opponents's
+the "board" is a list of 14 ints going in the following order (with the player being the bottom holes and the game bein played clockwise)
+  07 08 09 10 11 12
+06                 13
+  05 04 03 02 01 00
+
 TODO:
-make search account for being allowed to move again
-do not generate gametree, instead do search recursively
+in recursive step: return cost, if no moves are availible
 '''
+from math import inf
 
 def make_move(board:list[int], move:int) -> tuple[list[int], bool] | None:
     board_ret = board.copy()
@@ -44,60 +51,63 @@ def eval_board(board:list[int]) -> float:
         board_local[13] = sum(board_local[0:6])
         for i in range(6):
             board_local[i] = 0
-    
+    else:
+        majority_score = sum(board[:6]) - sum(board[7:13])
+        score += majority_score / 2
     score -= board_local[6]
     score += board_local[13]
     
-    if board_local[6] >= 18: score -= 100
-    if board_local[13] > 18: score += 100
+    if board_local[6] > 18: score -= inf
+    if board_local[13] > 18: score += inf
     return score
 
-def _move_sequence_to_index(move_costs:list[tuple[list[int], float]], move_sequence:list[int], only_next:bool=False) -> list[int]:
-    indices = []
-    for i in range(len(move_costs)):
-        ms, _ = move_costs[i]
-        if len(ms) <= len(move_sequence): continue
-        if only_next and (len(ms) + 1 != len(move_sequence)): continue
-        if ms[:len(move_sequence)] == move_sequence:
-            indices.append(i)
-    #print(f"{move_costs=}")
-    print(f"{move_sequence=}")
-    print(f"{indices=}")
-    return indices
+def get_availible_moves(board:list[int], player:bool) -> list[int]:
+    '''
+    returns a list of indices that may be moved / a list of moves
+    '''
+    if player:
+        return [i for i in range(6) if board[i] > 0]
+    else:
+        return [i for i in range(7, 13) if board[i] > 0]
 
-def aggregate_cost(move_costs:list[tuple[list[int], float]], move_sequence:list[int], is_maximizing:bool) -> float:
-    for moves_made, move_cost in move_costs:
-        if moves_made == move_sequence:
-            return move_cost
-    minimax = max if is_maximizing else min
-    costs_this_level = []
-    for i in _move_sequence_to_index(move_costs, move_sequence, True):
-        costs_this_level.append(aggregate_cost(move_costs, move_costs[i][0], not is_maximizing))
-    return minimax(costs_this_level)
+def recursive_step(board:list[int], moves:list[int], player:bool, depth:int, depth_max:int) -> float:
+    '''
+    RENAME;
+    '''
+    #print(f"current_depth: \t{depth}")
+    if depth == depth_max: return eval_board(board=board.copy())
+    
+    moves_availible = get_availible_moves(board=board, player=player)
+    if moves_availible == []: return eval_board(board.copy())
+    minimax = max if player else min
 
-def find_move(initial_board:list[int], search_depth:int) -> dict[int, float]:
-    queue: list[tuple[list[int], list[int], float]] = [([i], board:=make_move(initial_board, i)[0], eval_board(board)) for i in range(6) if initial_board[i] > 0]
-    for depth_level in range(1, search_depth):
-        print(f"creating gametree with {depth_level=}\tand {len(queue)=}")
-        queue_new = []
-        for element in queue:
-            moves, board, cost_current = element
-            move_range = range(6) if depth_level % 2 == 0 else range(7, 12)
-            moves_new = [moves + [i] for i in move_range if board[i] > 0]
-            for move_sequence_new in moves_new:
-                board_new = make_move(board, move_sequence_new[-1])[0]
-                cost_new = eval_board(board_new)
-                queue_new.append((move_sequence_new, board_new, cost_new))
-        queue = queue_new.copy()
-    print("aggregating costs")
-    move_costs: list[tuple[list[int], float]] = [(moves, cost) for moves, _, cost in queue]
-    output = {i: aggregate_cost(move_costs, [i], True) for i in range(6) if board[i] > 0}
+    costs_next_branch: list[float] = []
+    for move_next in moves_availible:
+        _make_move_output = make_move(board=board.copy(), move=move_next)
+        if _make_move_output == None: continue
+        board_new, move_again = _make_move_output
+        moves_new = moves + [move_next]
+        player_new = player if move_again else not player
+        cost_new = recursive_step(board=board_new, moves=moves_new, player=player_new, depth=depth+1, depth_max=depth_max)
+        if player and (cost_new == inf): return inf
+        elif not player and (cost_new == -inf): return -inf
+        costs_next_branch.append(cost_new)
+    return minimax(costs_next_branch)
+
+def find_moves(board:list[int], search_depth:int, player:bool) -> dict[int, float]:
+    moves_availible = get_availible_moves(board=board.copy(), player=player)
+    output: dict[int, float] = {}
+    for move_availible in moves_availible:
+        output[move_availible] = recursive_step(board=board.copy(), moves=[move_availible], player=player, depth=0, depth_max=search_depth)
     return output
 
 if __name__ == "__main__":
-    board = [3 if i % 7 != 6 else 0 for i in range(14)]
+    board = [3 if not (i % 7) == 6 else 0 for i in range(14)]
     search_depth = 8
-    
-    evaluations = find_move(board, search_depth)
-    
-    print(evaluations)
+    player = True
+
+    moves = find_moves(board=board.copy(), search_depth=search_depth, player=player)
+
+    print(f"SOLUTIONS:")
+    for move in moves:
+        print(f"{move}:\t{moves[move]}")
