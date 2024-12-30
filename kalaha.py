@@ -8,10 +8,16 @@ the "board" is a list of 14 ints going in the following order (with the player b
   05 04 03 02 01 00
 
 TODO:
-in recursive step: return cost, if no moves are available
+add move-ordering so alpha beta pruning is more optimal
 '''
 from math import inf
 from random import choice
+from time import time
+
+INITIAL_BOARD: list[int] = [3 if not (i % 7) == 6 else 0 for i in range(14)]
+
+def is_game_over(board:list[int]) -> bool:
+    return (board[6] > 18 or board[13] > 18 or board[6] == board[13] == 18)
 
 def flip_board(board:list[int]) -> list[int]:
     return board[7:14] + board[0:7]
@@ -43,15 +49,17 @@ def make_move(board:list[int], move:int) -> tuple[list[int], bool] | None:
     if enemies_safe == 6:
         if final_hole < 6 and board_ret[final_hole] == 1:
             hole_mirrored = 12 - final_hole
-            board_ret[13] += 1 + board_ret[hole_mirrored]
-            board_ret[final_hole] = 0
-            board_ret[hole_mirrored] = 0
+            if board_ret[hole_mirrored] > 0:
+                board_ret[13] += 1 + board_ret[hole_mirrored]
+                board_ret[final_hole] = 0
+                board_ret[hole_mirrored] = 0
     else:
         if final_hole > 6 and board_ret[final_hole] == 1:
             hole_mirrored = 12 - final_hole
-            board_ret[6] += 1 + board_ret[hole_mirrored]
-            board_ret[final_hole] = 0
-            board_ret[hole_mirrored] = 0
+            if board_ret[hole_mirrored] > 0:
+                board_ret[6] += 1 + board_ret[hole_mirrored]
+                board_ret[final_hole] = 0
+                board_ret[hole_mirrored] = 0
     return board_ret, move_again
 
 def eval_board(board:list[int]) -> float:
@@ -84,7 +92,7 @@ def get_available_moves(board:list[int], player:bool) -> list[int]:
     else:
         return [i for i in range(7, 13) if board[i] > 0]
 
-def recursive_step(board:list[int], player:bool, depth:int, depth_max:int) -> float:
+def recursive_step(board:list[int], player:bool, depth:int, depth_max:int, alpha:float, beta:float) -> float:
     '''
     RENAME;
     '''
@@ -93,21 +101,27 @@ def recursive_step(board:list[int], player:bool, depth:int, depth_max:int) -> fl
     
     moves_available = get_available_moves(board=board, player=player)
     if moves_available == []: return eval_board(board.copy())
-    minimax = max if player else min
+    value = -inf if player else inf
 
-    costs_next_branch: list[float] = []
     for move_next in moves_available:
         _make_move_output = make_move(board=board.copy(), move=move_next)
         if _make_move_output == None: continue
         board_new, move_again = _make_move_output
         player_new = player if move_again else not player
-        cost_new = recursive_step(board=board_new, player=player_new, depth=depth+1, depth_max=depth_max)
+        cost_new = recursive_step(board=board_new, player=player_new, depth=depth+1, depth_max=depth_max, alpha=alpha, beta=beta)
+        if player:
+            value = max(value, cost_new)
+            alpha = max(alpha, value)
+        else:
+            value = min(value, cost_new)
+            beta  = min(beta, value)
+        if beta <= alpha: break
         if player and (cost_new == inf): return inf
         elif not player and (cost_new == -inf): return -inf
-        costs_next_branch.append(cost_new)
-    return minimax(costs_next_branch)
+    return value
 
 def eval_moves(board:list[int], depth_max:int, player:bool) -> dict[int, float]:
+    player_passed_to_function = player
     if not player:
         board = flip_board(board=board)
         player = True
@@ -118,7 +132,7 @@ def eval_moves(board:list[int], depth_max:int, player:bool) -> dict[int, float]:
         if _make_move_output == None: raise ValueError("fuck off, this is not a thing")
         board_instance, move_again = _make_move_output
         player_instance = player if move_again else not player
-        output[(7 * int(not player)) + move_chosen] = recursive_step(board=board_instance.copy(), player=player_instance, depth=1, depth_max=depth_max)
+        output[(7 * int(not player_passed_to_function)) + move_chosen] = recursive_step(board=board_instance.copy(), player=player_instance, depth=1, depth_max=depth_max, alpha=-inf, beta=+inf)
     return output
 
 def get_player_move(available_moves:list[int]) -> int:
@@ -164,19 +178,25 @@ def game() -> None:
 
 
 if __name__ == "__main__":
-    '''
-    board = [3 if not (i % 7) == 6 else 0 for i in range(14)]
+    #'''
+    board = INITIAL_BOARD
+    #board = [1,0,3,6,1,6,0,
+    #         2,0,7,0,5,5,0]
     search_depth = 8
     player = True
-
+    
+    start = time()
     moves = eval_moves(board=board.copy(), depth_max=search_depth, player=player)
+    stop = time()
+    
+    print(f"executed in {stop - start}")
 
     print(f"SOLUTIONS:")
     for move in moves:
         print(f"{move}:\t{moves[move]}")
     '''
-    #game()
-    #'''
+    game()
+    ''#'
     #board = [1,1,0,1,0,0,17,6,3,0,0,1,0,16]
     board = [2,1,0,1,0,0,17,0,4,1,1,2,1,16]
     search_depth = 1
@@ -185,4 +205,4 @@ if __name__ == "__main__":
     print(f"SOLUTIONS:")
     for move in moves:
         print(f"{move}:\t{moves[move]}")
-    #'''
+    '''
