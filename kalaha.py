@@ -60,6 +60,14 @@ def make_move(board:list[int], move:int) -> tuple[list[int], bool] | None:
                 board_ret[6] += 1 + board_ret[hole_mirrored]
                 board_ret[final_hole] = 0
                 board_ret[hole_mirrored] = 0
+    
+    if sum(board_ret[:6]) == 0:
+        board_ret[6] = sum(board_ret[7:13])
+        board_ret = [board_ret[i] if i in [6, 13] else 0 for i in range(14)]
+    elif sum(board_ret[7:13]) == 0:
+        board_ret[13] = sum(board_ret[:6])
+        board_ret = [board_ret[i] if i in [6, 13] else 0 for i in range(14)]
+
     return board_ret, move_again
 
 def eval_board(board:list[int]) -> float:
