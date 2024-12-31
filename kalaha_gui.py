@@ -147,6 +147,17 @@ class GUI():
             else:                                 msg = "game over: result unknown"
             self.ui_label_whos_turn.config(text=msg)
         
+        if not self.override_player:
+            if self.player:
+                self.ui_move_p1.config(state="normal")
+                self.ui_move_p2.config(state="disabled")
+            else:
+                self.ui_move_p1.config(state="disabled")
+                self.ui_move_p2.config(state="normal")
+        else:
+            self.ui_move_p1.config(state="normal")
+            self.ui_move_p2.config(state="normal")
+        
         self.ui_button_override_player.config(text=f"override={self.override_player}")
     
     def reset_board(self) -> None:
