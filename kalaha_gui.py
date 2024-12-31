@@ -42,6 +42,8 @@ class GUI():
         self.ui_frame_settings.grid(row=0, column=0, padx=5, pady=5)
         self.ui_frame_settings_buttons = tk.Frame(master=self.ui_frame_settings, background=self.BACKGROUND)
         self.ui_frame_settings_buttons.grid(row=0, column=0)
+        self.ui_frame_settings_buttons2 = tk.Frame(master=self.ui_frame_settings, background=self.BACKGROUND)
+        self.ui_frame_settings_buttons2.grid(row=1, column=0)
 
         self.ui_frame_game = tk.Frame(master=self.mw, background=self.BACKGROUND)
         self.ui_frame_game.grid(row=1, column=0, padx=5, pady=5)
@@ -57,8 +59,10 @@ class GUI():
         self.ui_move_p1.grid(row=0, column=2)
         self.ui_move_p2.grid(row=0, column=3)
 
-        self.ui_button_override_player = tk.Button(master=self.ui_frame_settings, text=f"override={self.override_player}", foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.handle_button_override_player)
-        self.ui_button_override_player.grid(row=1, column=0)
+        self.ui_button_override_player = tk.Button(master=self.ui_frame_settings_buttons2, text=f"override={self.override_player}", foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.handle_button_override_player)
+        self.ui_button_override_player.grid(row=0, column=0)
+        self.ui_button_change_player = tk.Button(master=self.ui_frame_settings_buttons2, text="change player", foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.handle_button_change_player)
+        self.ui_button_change_player.grid(row=0, column=1)
 
         self.ui_search_depth_entry = tk.Entry(master=self.ui_frame_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, textvariable=self.ui_search_depth_tvar)
         self.ui_search_depth_entry.grid(row=2, column=0)
@@ -106,11 +110,14 @@ class GUI():
 
         self.ui_exists = True
         self.reset_board()
-        self.ui_update()
+        self.update_ui()
     
     def handle_button(self, button_index:int) -> None:
         if self.game_setup_state == "game":
             self._handle_button_game(button_index=button_index)
+        elif self.game_setup_state in ["add", "subtract"]:
+            self._handle_button_change_amount(button_index=button_index)
+        else: raise NotImplementedError(f"gamestate '{self.game_setup_state}' not implemented")
     
     def _handle_button_game(self, button_index:int) -> None:
         moves_available = kalaha.get_available_moves(board=self.board, player=(button_index < 7))
@@ -120,14 +127,18 @@ class GUI():
         if make_move_output == None: raise ValueError("Another error that can never occur")
         self.board, move_again = make_move_output
         self.player = self.player if move_again else not self.player
-        self.ui_update()
+        self.update_ui()
     
     def _handle_button_change_amount(self, button_index:int) -> None:
         amount = self.board[button_index] - 1 if self.game_setup_state == "subtract" else self.board[button_index] + 1
         self.board[button_index] = max(0, amount)
-        self.ui_update()
+        self.update_ui()
     
-    def ui_update(self) -> None:
+    def handle_button_change_player(self) -> None:
+        self.player = not self.player
+        self.update_ui()
+    
+    def update_ui(self) -> None:
         if not self.ui_exists: return
         is_game_over = kalaha.is_game_over(board=self.board)
         for i in range(14):
@@ -136,7 +147,7 @@ class GUI():
                     enabled = (not (i in [6, 13]) and not is_game_over and self.board[i] > 0 and ((i in [[7,8,9,10,11,12],[0,1,2,3,4,5]][int(self.player)]) or self.override_player))
             else:
                 enabled = True
-            self.ui_game_buttons[i].config(state="normal" if enabled else "disabled")
+            self.ui_game_buttons[i].config(state=("normal" if enabled else "disabled"))
         
         if not is_game_over:
             self.ui_label_whos_turn.config(text=f"Player {'1' if self.player else '2'}s turn")
@@ -162,11 +173,12 @@ class GUI():
     
     def reset_board(self) -> None:
         self.board = kalaha.INITIAL_BOARD.copy()
-        self.ui_update()
+        self.update_ui()
 
     def change_setup_state(self) -> None:
         self.game_setup_state = self.game_setup_states[(self.game_setup_states.index(self.game_setup_state) + 1) % len(self.game_setup_states)]
         self.ui_button_change_setup.config(text=self.game_setup_state)
+        self.update_ui()
     
     def make_move_pc(self, player:Literal[1, 2]) -> None:
         depth_max_input = str(self.ui_search_depth_tvar.get()) # type: ignore
@@ -182,11 +194,11 @@ class GUI():
         if _make_move_output == None: return
         self.board, move_again = _make_move_output
         self.player = self.player if move_again else not self.player
-        self.ui_update()
+        self.update_ui()
     
     def handle_button_override_player(self) -> None:
         self.override_player = not self.override_player
-        self.ui_update()
+        self.update_ui()
 
 
 if __name__ == "__main__":
