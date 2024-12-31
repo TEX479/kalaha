@@ -12,17 +12,20 @@ from typing import Literal
 from random import choice
 
 class GUI():
-    def __init__(self, platform:Literal["phone", "pc"] | None=None) -> None:
+    def __init__(self, platform:Literal["phone", "pc"] | None=None, debug:bool=False) -> None:
         self.platform: Literal["phone", "pc"] = platform if platform != None else ("phone" if f"{__file__}".startswith("/storage/emulated/") else "pc")
         self.gui_created: bool = False
         self.is_running = True
         self.ui_exists = False
+        self.debug = debug
 
         self.FOREGROUND = "#ffffff"
         self.BACKGROUND = "#000000"
         self.FOREGROUND_DISABLED = "#808080" # color disabled
 
         self.player = True
+        
+        self.turn: int = 0
 
         self.override_player = False
         self.game_setup_state: Literal["game", "add", "subtract"] = "game"
@@ -78,6 +81,12 @@ class GUI():
         self.ui_search_depth_entry.grid(row=2, column=0)
         self.ui_label_whos_turn = tk.Label(master=self.ui_frame_settings, text="Player 1's turn", font=font_settings, background=self.BACKGROUND, foreground=self.FOREGROUND)
         self.ui_label_whos_turn.grid(row=3, column=0)
+
+        if self.debug:
+            self.ui_label_sum = tk.Label(master=self.ui_frame_settings, text=f"{sum(self.board)}", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND)
+            self.ui_label_sum.grid(row=4, column=0)
+            self.ui_label_turn = tk.Label(master=self.ui_frame_settings, text=f"turn: {self.turn}", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND)
+            self.ui_label_turn.grid(row=5, column=0)
 
         # create and position game buttons
         self.ui_game_buttons: list[tk.Button] = []
@@ -137,6 +146,7 @@ class GUI():
         if make_move_output == None: raise ValueError("Another error that can never occur")
         self.board, move_again = make_move_output
         self.player = self.player if move_again else not self.player
+        self.turn += 1
         self.update_ui()
     
     def _handle_button_change_amount(self, button_index:int) -> None:
@@ -180,9 +190,14 @@ class GUI():
             self.ui_move_p2.config(state="normal")
         
         self.ui_button_override_player.config(text=f"override={self.override_player}")
+
+        if self.debug:
+            self.ui_label_sum.config(text=f"{sum(self.board)}")
+            self.ui_label_turn.config(text=f"turn: {self.turn}")
     
     def reset_board(self) -> None:
         self.board = kalaha.INITIAL_BOARD.copy()
+        self.turn = 0
         self.update_ui()
 
     def change_setup_state(self) -> None:
@@ -204,6 +219,7 @@ class GUI():
         if _make_move_output == None: return
         self.board, move_again = _make_move_output
         self.player = self.player if move_again else not self.player
+        self.turn += 1
         self.update_ui()
     
     def handle_button_override_player(self) -> None:
