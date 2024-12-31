@@ -9,7 +9,7 @@ import kalaha
 import tkinter as tk
 from tkinter.font import Font
 from typing import Literal
-#from random import choice
+from random import choice
 
 class GUI():
     def __init__(self, platform:Literal["phone", "pc"] | None=None, debug:bool=False) -> None:
@@ -53,34 +53,39 @@ class GUI():
 
         self.ui_frame_settings = tk.Frame(master=self.mw, background=self.BACKGROUND)
         self.ui_frame_settings.grid(row=0, column=0, padx=5, pady=5)
-        self.ui_frame_settings_buttons = tk.Frame(master=self.ui_frame_settings, background=self.BACKGROUND)
-        self.ui_frame_settings_buttons.grid(row=0, column=0)
+        self.ui_frame_settings_buttons1 = tk.Frame(master=self.ui_frame_settings, background=self.BACKGROUND)
+        self.ui_frame_settings_buttons1.grid(row=0, column=0)
         self.ui_frame_settings_buttons2 = tk.Frame(master=self.ui_frame_settings, background=self.BACKGROUND)
         self.ui_frame_settings_buttons2.grid(row=1, column=0)
+        self.ui_frame_settings_buttons3 = tk.Frame(master=self.ui_frame_settings, background=self.BACKGROUND)
+        self.ui_frame_settings_buttons3.grid(row=2, column=0)
+        self.ui_frame_settings_other = tk.Frame(master=self.ui_frame_settings, background=self.BACKGROUND)
+        self.ui_frame_settings_other.grid(row=3, column=0)
 
         self.ui_frame_game = tk.Frame(master=self.mw, background=self.BACKGROUND)
         self.ui_frame_game.grid(row=1, column=0, padx=5, pady=5)
 
         # create system buttons
-        self.ui_reset_board = tk.Button(self.ui_frame_settings_buttons, text="reset board", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.reset_board)
+        self.ui_reset_board = tk.Button(self.ui_frame_settings_buttons1, text="reset board", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.reset_board)
         self.ui_reset_board.grid(row=0, column=0)
-        self.ui_button_change_setup = tk.Button(self.ui_frame_settings_buttons, text=self.game_setup_state, font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.change_setup_state)
+        self.ui_button_change_setup = tk.Button(self.ui_frame_settings_buttons1, text=self.game_setup_state, font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.change_setup_state)
         self.ui_button_change_setup.grid(row=0, column=1)
         self.ui_search_depth_tvar = tk.Variable(master=self.mw, value="8")
-        self.ui_move_p1 = tk.Button(master=self.ui_frame_settings_buttons, text="p1", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=lambda: self.make_move_pc(1))
-        self.ui_move_p2 = tk.Button(master=self.ui_frame_settings_buttons, text="p2", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=lambda: self.make_move_pc(2))
-        self.ui_move_p1.grid(row=0, column=2)
-        self.ui_move_p2.grid(row=0, column=3)
+        self.ui_suggest_move = tk.Button(master=self.ui_frame_settings_buttons1, text="suggest", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.suggest_move)
+        self.ui_suggest_move.grid(row=0, column=2)
 
-        self.ui_button_override_player = tk.Button(master=self.ui_frame_settings_buttons2, text=f"override={self.override_player}", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.handle_button_override_player)
+        self.ui_make_move = tk.Button(master=self.ui_frame_settings_buttons2, text="make move", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.make_move_pc)
+        self.ui_make_move.grid(row=0, column=0)
+
+        self.ui_button_override_player = tk.Button(master=self.ui_frame_settings_buttons3, text=f"override={self.override_player}", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.handle_button_override_player)
         self.ui_button_override_player.grid(row=0, column=0)
-        self.ui_button_change_player = tk.Button(master=self.ui_frame_settings_buttons2, text="change player", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.handle_button_change_player)
+        self.ui_button_change_player = tk.Button(master=self.ui_frame_settings_buttons3, text="change player", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.handle_button_change_player)
         self.ui_button_change_player.grid(row=0, column=1)
 
-        self.ui_search_depth_entry = tk.Entry(master=self.ui_frame_settings, font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, textvariable=self.ui_search_depth_tvar)
-        self.ui_search_depth_entry.grid(row=2, column=0)
-        self.ui_label_whos_turn = tk.Label(master=self.ui_frame_settings, text="Player 1's turn", font=font_settings, background=self.BACKGROUND, foreground=self.FOREGROUND)
-        self.ui_label_whos_turn.grid(row=3, column=0)
+        self.ui_search_depth_entry = tk.Entry(master=self.ui_frame_settings_other, font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, textvariable=self.ui_search_depth_tvar)
+        self.ui_search_depth_entry.grid(row=0, column=0)
+        self.ui_label_whos_turn = tk.Label(master=self.ui_frame_settings_other, text="Player 1's turn", font=font_settings, background=self.BACKGROUND, foreground=self.FOREGROUND)
+        self.ui_label_whos_turn.grid(row=1, column=0)
 
         if self.debug:
             self.ui_label_sum = tk.Label(master=self.ui_frame_settings, text=f"{sum(self.board)}", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND)
@@ -179,17 +184,6 @@ class GUI():
             else:                                 msg = "game over: result unknown"
             self.ui_label_whos_turn.config(text=msg)
         
-        if not self.override_player:
-            if self.player:
-                self.ui_move_p1.config(state="normal")
-                self.ui_move_p2.config(state="disabled")
-            else:
-                self.ui_move_p1.config(state="disabled")
-                self.ui_move_p2.config(state="normal")
-        else:
-            self.ui_move_p1.config(state="normal")
-            self.ui_move_p2.config(state="normal")
-        
         self.ui_button_override_player.config(text=f"override={self.override_player}")
 
         if self.debug:
@@ -199,6 +193,7 @@ class GUI():
     def reset_board(self) -> None:
         self.board = kalaha.INITIAL_BOARD.copy()
         self.turn = 0
+        self.player = True
         self.reset_highlights()
         self.update_ui()
 
@@ -207,12 +202,12 @@ class GUI():
         self.ui_button_change_setup.config(text=self.game_setup_state)
         self.update_ui()
     
-    def make_move_pc(self, player:Literal[1, 2]) -> None:
+    def suggest_move(self) -> None:
         depth_max_input = str(self.ui_search_depth_tvar.get()) # type: ignore
         if not depth_max_input.isdecimal(): return
         depth_max = int(depth_max_input)
         if depth_max <= 0: return
-        move_list = kalaha.eval_moves(board=self.board.copy(), depth_max=depth_max, player=(player==1))
+        move_list = kalaha.eval_moves(board=self.board.copy(), depth_max=depth_max, player=self.player)
         '''
         best_cost = max([move_list[i] for i in move_list])
         best_moves = [i for i in move_list if move_list[i] == best_cost]
@@ -225,6 +220,23 @@ class GUI():
         self.turn += 1
         '''
         self.pc_highlight_moves(moves=move_list)
+        self.update_ui()
+    
+    def make_move_pc(self) -> None:
+        depth_max_input = str(self.ui_search_depth_tvar.get()) # type: ignore
+        if not depth_max_input.isdecimal(): return
+        depth_max = int(depth_max_input)
+        if depth_max <= 0: return
+        move_list = kalaha.eval_moves(board=self.board.copy(), depth_max=depth_max, player=self.player)
+        best_cost = max([move_list[i] for i in move_list])
+        best_moves = [i for i in move_list if move_list[i] == best_cost]
+        move = choice(best_moves)
+        
+        _make_move_output = kalaha.make_move(board=self.board.copy(), move=move)
+        if _make_move_output == None: return
+        self.board, move_again = _make_move_output
+        self.player = self.player if move_again else not self.player
+        self.turn += 1
         self.update_ui()
     
     def reset_highlights(self) -> None:
