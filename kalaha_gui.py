@@ -9,7 +9,7 @@ import kalaha
 import tkinter as tk
 from tkinter.font import Font
 from typing import Literal
-from random import choice
+#from random import choice
 
 class GUI():
     def __init__(self, platform:Literal["phone", "pc"] | None=None, debug:bool=False) -> None:
@@ -132,6 +132,7 @@ class GUI():
         self.update_ui()
     
     def handle_button(self, button_index:int) -> None:
+        self.reset_highlights()
         if self.game_setup_state == "game":
             self._handle_button_game(button_index=button_index)
         elif self.game_setup_state in ["add", "subtract"]:
@@ -198,6 +199,7 @@ class GUI():
     def reset_board(self) -> None:
         self.board = kalaha.INITIAL_BOARD.copy()
         self.turn = 0
+        self.reset_highlights()
         self.update_ui()
 
     def change_setup_state(self) -> None:
@@ -211,6 +213,7 @@ class GUI():
         depth_max = int(depth_max_input)
         if depth_max <= 0: return
         move_list = kalaha.eval_moves(board=self.board.copy(), depth_max=depth_max, player=(player==1))
+        '''
         best_cost = max([move_list[i] for i in move_list])
         best_moves = [i for i in move_list if move_list[i] == best_cost]
         move = choice(best_moves)
@@ -220,8 +223,40 @@ class GUI():
         self.board, move_again = _make_move_output
         self.player = self.player if move_again else not self.player
         self.turn += 1
+        '''
+        self.pc_highlight_moves(moves=move_list)
         self.update_ui()
     
+    def reset_highlights(self) -> None:
+        for i in range(14):
+            self.ui_game_buttons[i].config(background=self.BACKGROUND)
+
+    def pc_highlight_moves(self, moves:dict[int, float]) -> None:
+        # dict that containts the colors for highlighting in ascending order
+        colors = {
+            1: ["#008000"],
+            2: ["#800000", "#008000"],
+            3: ["#800000", "#404000", "#008000"],
+            4: ["#800000", "#602000", "#206000", "#008000"],
+            5: ["#800000", "#602000", "#404000", "#206000", "#008000"],
+            6: ["#800000", "#602000", "#503000", "#305000", "#206000", "#008000"]
+            }
+        
+        moves_list = [i for i in moves]
+        moves_packed: dict[float, list[int]] = {}
+        for i in moves_list:
+            if not moves[i] in moves_packed:
+                moves_packed[moves[i]] = []
+            moves_packed[moves[i]].append(i)
+        costs_sorted = sorted([i for i in moves_packed])
+        colors_count = len(costs_sorted)
+
+        for cost_index in range(colors_count):
+            button_index_list = moves_packed[costs_sorted[cost_index]]
+            for button_index_list_index in range(len(button_index_list)):
+                button_index = button_index_list[button_index_list_index]
+                self.ui_game_buttons[button_index].config(background=colors[colors_count][cost_index])
+
     def handle_button_override_player(self) -> None:
         self.override_player = not self.override_player
         self.update_ui()
