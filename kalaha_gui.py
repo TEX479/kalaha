@@ -7,6 +7,7 @@ make it so that it is apearant, what player' turn it is
 
 import kalaha
 import tkinter as tk
+from tkinter.font import Font
 from typing import Literal
 from random import choice
 
@@ -38,6 +39,15 @@ class GUI():
         self.mw.rowconfigure(index=1, minsize=0, weight=1)
         self.mw.configure(background=self.BACKGROUND)
 
+        if self.platform == "pc":
+            font_settings = Font(size=20)
+            font_game = Font(size=40)
+        elif self.platform == "phone":
+            font_settings = ("Arial", 8)
+            font_game = ("Arial", 14)
+        else:
+            raise NotImplementedError(f"platform '{self.platform}' not implemented")
+
         self.ui_frame_settings = tk.Frame(master=self.mw, background=self.BACKGROUND)
         self.ui_frame_settings.grid(row=0, column=0, padx=5, pady=5)
         self.ui_frame_settings_buttons = tk.Frame(master=self.ui_frame_settings, background=self.BACKGROUND)
@@ -49,30 +59,30 @@ class GUI():
         self.ui_frame_game.grid(row=1, column=0, padx=5, pady=5)
 
         # create system buttons
-        self.ui_reset_board = tk.Button(self.ui_frame_settings_buttons, text="reset board", foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.reset_board)
+        self.ui_reset_board = tk.Button(self.ui_frame_settings_buttons, text="reset board", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.reset_board)
         self.ui_reset_board.grid(row=0, column=0)
-        self.ui_button_change_setup = tk.Button(self.ui_frame_settings_buttons, text=self.game_setup_state, foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.change_setup_state)
+        self.ui_button_change_setup = tk.Button(self.ui_frame_settings_buttons, text=self.game_setup_state, font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.change_setup_state)
         self.ui_button_change_setup.grid(row=0, column=1)
         self.ui_search_depth_tvar = tk.Variable(master=self.mw, value="8")
-        self.ui_move_p1 = tk.Button(master=self.ui_frame_settings_buttons, text="p1", foreground=self.FOREGROUND, background=self.BACKGROUND, command=lambda: self.make_move_pc(1))
-        self.ui_move_p2 = tk.Button(master=self.ui_frame_settings_buttons, text="p2", foreground=self.FOREGROUND, background=self.BACKGROUND, command=lambda: self.make_move_pc(2))
+        self.ui_move_p1 = tk.Button(master=self.ui_frame_settings_buttons, text="p1", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=lambda: self.make_move_pc(1))
+        self.ui_move_p2 = tk.Button(master=self.ui_frame_settings_buttons, text="p2", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=lambda: self.make_move_pc(2))
         self.ui_move_p1.grid(row=0, column=2)
         self.ui_move_p2.grid(row=0, column=3)
 
-        self.ui_button_override_player = tk.Button(master=self.ui_frame_settings_buttons2, text=f"override={self.override_player}", foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.handle_button_override_player)
+        self.ui_button_override_player = tk.Button(master=self.ui_frame_settings_buttons2, text=f"override={self.override_player}", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.handle_button_override_player)
         self.ui_button_override_player.grid(row=0, column=0)
-        self.ui_button_change_player = tk.Button(master=self.ui_frame_settings_buttons2, text="change player", foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.handle_button_change_player)
+        self.ui_button_change_player = tk.Button(master=self.ui_frame_settings_buttons2, text="change player", font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, command=self.handle_button_change_player)
         self.ui_button_change_player.grid(row=0, column=1)
 
-        self.ui_search_depth_entry = tk.Entry(master=self.ui_frame_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, textvariable=self.ui_search_depth_tvar)
+        self.ui_search_depth_entry = tk.Entry(master=self.ui_frame_settings, font=font_settings, foreground=self.FOREGROUND, background=self.BACKGROUND, textvariable=self.ui_search_depth_tvar)
         self.ui_search_depth_entry.grid(row=2, column=0)
-        self.ui_label_whos_turn = tk.Label(master=self.ui_frame_settings, text="Player 1's turn", background=self.BACKGROUND, foreground=self.FOREGROUND)
+        self.ui_label_whos_turn = tk.Label(master=self.ui_frame_settings, text="Player 1's turn", font=font_settings, background=self.BACKGROUND, foreground=self.FOREGROUND)
         self.ui_label_whos_turn.grid(row=3, column=0)
 
         # create and position game buttons
         self.ui_game_buttons: list[tk.Button] = []
         for i in range(6):
-            button = tk.Button(master=self.ui_frame_game, text=f"3", foreground=self.FOREGROUND, background=self.BACKGROUND, command=(lambda i=i: self.handle_button(i)))
+            button = tk.Button(master=self.ui_frame_game, text=f"3", font=font_game, foreground=self.FOREGROUND, background=self.BACKGROUND, command=(lambda i=i: self.handle_button(i)))
             if self.platform == "pc":
                 row = 2
                 column = 6 - i
@@ -82,14 +92,14 @@ class GUI():
             else: raise NotImplementedError(f"Platform '{self.platform}' not implemented")
             button.grid(row=row, column=column)
             self.ui_game_buttons.append(button)
-        button = tk.Button(master=self.ui_frame_game, text="0", foreground=self.FOREGROUND, background=self.BACKGROUND, command=(lambda: self.handle_button(6)))
+        button = tk.Button(master=self.ui_frame_game, text="0", font=font_game, foreground=self.FOREGROUND, background=self.BACKGROUND, command=(lambda: self.handle_button(6)))
         button.config(state="disabled")
         if   self.platform == "pc"   : button.grid(row=1, column=0)
         elif self.platform == "phone": button.grid(row=0, column=1)
         else: raise NotImplementedError(f"Platform '{self.platform}' not implemented")
         self.ui_game_buttons.append(button)
         for i in range(7, 13):
-            button = tk.Button(master=self.ui_frame_game, text=f"3", foreground=self.FOREGROUND, background=self.BACKGROUND, command=(lambda i=i: self.handle_button(i)))
+            button = tk.Button(master=self.ui_frame_game, text=f"3", font=font_game, foreground=self.FOREGROUND, background=self.BACKGROUND, command=(lambda i=i: self.handle_button(i)))
             if self.platform == "pc":
                 row = 0
                 column = i - 6
@@ -99,7 +109,7 @@ class GUI():
             else: raise NotImplementedError(f"Platform '{self.platform}' not implemented")
             button.grid(row=row, column=column)
             self.ui_game_buttons.append(button)        
-        button = tk.Button(master=self.ui_frame_game, text="0", foreground=self.FOREGROUND, background=self.BACKGROUND, command=(lambda: self.handle_button(13)))
+        button = tk.Button(master=self.ui_frame_game, text="0", font=font_game, foreground=self.FOREGROUND, background=self.BACKGROUND, command=(lambda: self.handle_button(13)))
         button.config(state="disabled")
         if self.platform == "pc":
             button.grid(row=1, column=7)
