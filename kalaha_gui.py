@@ -90,14 +90,18 @@ class GUI():
                 row = 0
                 column = i - 6
             elif self.platform == "phone":
-                row = i + 1
+                row = i - 6
                 column = 2
             else: raise NotImplementedError(f"Platform '{self.platform}' not implemented")
             button.grid(row=row, column=column)
             self.ui_game_buttons.append(button)        
         button = tk.Button(master=self.ui_frame_game, text="0", foreground=self.FOREGROUND, background=self.BACKGROUND, command=(lambda: self.handle_button(13)))
         button.config(state="disabled")
-        button.grid(row=1, column=7)
+        if self.platform == "pc":
+            button.grid(row=1, column=7)
+        elif self.platform == "phone":
+            button.grid(row=7, column=1)
+        else: raise NotImplementedError(f"Platform '{self.platform}' not implemented")
         self.ui_game_buttons.append(button)
 
         self.ui_exists = True
