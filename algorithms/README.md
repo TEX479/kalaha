@@ -1,0 +1,1 @@
+Each alg will be passed a "current_board" (usually a list of legth 14), "current_player" (bool, when true, it's player 1's turn, if false, it is player 2's) and a "make_move" function that translates the "current_board" into the next board. "make_move" takes 2 arguments: "board" and "field" (an int that is the position that gets moved in the turn).

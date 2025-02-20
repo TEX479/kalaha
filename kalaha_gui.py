@@ -5,7 +5,8 @@ TODO:
 make it so that it is apearant, what player' turn it is
 '''
 
-import kalaha
+import engine
+from algorithms import v1 as kalaha_cpu
 import tkinter as tk
 from tkinter.font import Font
 from typing import Literal
@@ -31,7 +32,7 @@ class GUI():
         self.game_setup_state: Literal["game", "add", "subtract"] = "game"
         self.game_setup_states: list[Literal["game", "add", "subtract"]] = ["game", "add", "subtract"]
 
-        self.board: list[int] = kalaha.INITIAL_BOARD.copy()
+        self.board: list[int] = engine.INITIAL_BOARD.copy()
         self.create_gui()
 
     def create_gui(self) -> None:
@@ -145,10 +146,10 @@ class GUI():
         else: raise NotImplementedError(f"gamestate '{self.game_setup_state}' not implemented")
     
     def _handle_button_game(self, button_index:int) -> None:
-        moves_available = kalaha.get_available_moves(board=self.board, player=(button_index < 7))
+        moves_available = engine.get_available_moves(board=self.board, player=(button_index < 7))
         if not (button_index in moves_available): return
 
-        make_move_output = kalaha.make_move(board=self.board, move=button_index)
+        make_move_output = engine.make_move(board=self.board, move=button_index)
         if make_move_output == None: raise ValueError("Another error that can never occur")
         self.board, move_again = make_move_output
         self.player = self.player if move_again else not self.player
@@ -166,7 +167,7 @@ class GUI():
     
     def update_ui(self) -> None:
         if not self.ui_exists: return
-        is_game_over = kalaha.is_game_over(board=self.board)
+        is_game_over = engine.is_game_over(board=self.board)
         for i in range(14):
             self.ui_game_buttons[i].config(text=f"{self.board[i]}")
             if self.game_setup_state == "game":
@@ -191,7 +192,7 @@ class GUI():
             self.ui_label_turn.config(text=f"turn: {self.turn}")
     
     def reset_board(self) -> None:
-        self.board = kalaha.INITIAL_BOARD.copy()
+        self.board = engine.INITIAL_BOARD.copy()
         self.turn = 0
         self.player = True
         self.reset_highlights()
@@ -207,13 +208,13 @@ class GUI():
         if not depth_max_input.isdecimal(): return
         depth_max = int(depth_max_input)
         if depth_max <= 0: return
-        move_list = kalaha.eval_moves(board=self.board.copy(), depth_max=depth_max, player=self.player)
+        move_list = kalaha_cpu.eval_moves(board=self.board.copy(), depth_max=depth_max, player=self.player)
         '''
         best_cost = max([move_list[i] for i in move_list])
         best_moves = [i for i in move_list if move_list[i] == best_cost]
         move = choice(best_moves)
         
-        _make_move_output = kalaha.make_move(board=self.board.copy(), move=move)
+        _make_move_output = engine.make_move(board=self.board.copy(), move=move)
         if _make_move_output == None: return
         self.board, move_again = _make_move_output
         self.player = self.player if move_again else not self.player
@@ -227,12 +228,12 @@ class GUI():
         if not depth_max_input.isdecimal(): return
         depth_max = int(depth_max_input)
         if depth_max <= 0: return
-        move_list = kalaha.eval_moves(board=self.board.copy(), depth_max=depth_max, player=self.player)
+        move_list = kalaha_cpu.eval_moves(board=self.board.copy(), depth_max=depth_max, player=self.player)
         best_cost = max([move_list[i] for i in move_list])
         best_moves = [i for i in move_list if move_list[i] == best_cost]
         move = choice(best_moves)
         
-        _make_move_output = kalaha.make_move(board=self.board.copy(), move=move)
+        _make_move_output = engine.make_move(board=self.board.copy(), move=move)
         if _make_move_output == None: return
         self.board, move_again = _make_move_output
         self.player = self.player if move_again else not self.player
