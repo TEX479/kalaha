@@ -15,7 +15,7 @@ def eval_board(board:list[int]) -> float:
             board_local[i] = 0
     else:
         majority_score = sum(board_local[:6]) - sum(board_local[7:13])
-        score += majority_score / 2
+        score += majority_score
     score -= board_local[6]
     score += board_local[13]
     
@@ -71,4 +71,3 @@ def get_move(board:list[int], player:bool, depth_max:int) -> int:
     highest_eval = max([evaluated[move] for move in evaluated])
     best_moves = [move for move in evaluated if evaluated[move] == highest_eval]
     return best_moves[0]
-
